@@ -3,7 +3,7 @@ var fs	 = require('fs');
 var https = require('https');
 var cp = require('child_process');
 //var ytdl = require('ytdl-core');
-var playlistId = (process.argv[2] && process.argv[2] !== "null") ? process.argv[2] : "UUmlRzNnfE0Qae_Ufn7NidIg";
+/*var playlistId = (process.argv[2] && process.argv[2] !== "null") ? process.argv[2] : "UUmlRzNnfE0Qae_Ufn7NidIg";
 var directory = (process.argv[3] && process.argv[3] !== "null") ? process.argv[3] : "~";
 var title = (process.argv[4] && process.argv[4] !== "null") ? process.argv[4] : "playlist";
 var verbose = (process.argv[5] && process.argv[5] === "true") ? true : false;
@@ -14,7 +14,7 @@ const baseAPIEndpoint = "/youtube/v3/playlistItems?part=snippet&maxResults=50&pl
 var playlistAPIData = [];
 var playlistAPIDataLength = 0;
 var finalOutput = "";
-var file = title + ".sh";
+var file = title + ".sh";*/
 
 var printResults = function () {
 	//console.log(extraCheckDirs);
