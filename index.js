@@ -34,7 +34,7 @@ var printResults = function () {
 	//console.log(existingIDs);
 	console.log(finalOutput);
 	fs.writeFileSync(file, finalOutput);
-	fs.chmod(file, 0777, () => {});
+	fs.chmod(file, 0755, () => {});
 }
 
 
@@ -63,9 +63,9 @@ var IdDictionary = function (dictionaryFile, initCallback) {
 	}*/
 }
 IdDictionary.prototype.setFile = function (err, fd) {
-	console.log("setting file to fd...")
+	//console.log("setting file to fd...")
 	this.file = fd;
-	console.log("init done...");
+	//console.log("init done...");
 	this.initCallback();
 }
 IdDictionary.prototype.writeId = function (id) {
@@ -112,7 +112,7 @@ module.exports.iddict = IdDictionary;
 
 
 
-var YoutubeDownloader = function (threads, ids, options, callback, completeCallback) {
+var DlManager = function (threads, ids, options, callback, completeCallback) {
 	this.threads = threads;
 	this.ids = [];
 	this.addIds(ids);
@@ -127,10 +127,10 @@ var YoutubeDownloader = function (threads, ids, options, callback, completeCallb
 		completeCallback();
 	}
 }
-YoutubeDownloader.prototype.addIds = function (ids) {
+DlManager.prototype.addIds = function (ids) {
 	this.ids = this.ids.concat(ids);
 }
-YoutubeDownloader.prototype.runNextId = function (index) {
+DlManager.prototype.runNextId = function (index) {
 	if (this.ids.length === 0) {
 		if (this.complete === false) this.completeCallback();
 	} else {
@@ -140,7 +140,7 @@ YoutubeDownloader.prototype.runNextId = function (index) {
 		this.callback(id);
 	}
 }
-YoutubeDownloader.prototype.setProcess = function (index, id) {
+DlManager.prototype.setProcess = function (index, id) {
 	this.processes[index] = cp.exec(`youtube-dl https://www.youtube.com/watch?v=${id}`);
 	this.processes[index].on("close", this.runNextId.bind(this, index));
 	this.processes[index].stdout.on("data", this.logOutput.bind(this, id));
@@ -150,10 +150,10 @@ YoutubeDownloader.prototype.setProcess = function (index, id) {
 	testProc.on("close", console.log);
 	testProc.stdout.on("data", console.log);*/
 }
-YoutubeDownloader.prototype.logOutput = function (id, data) {
+DlManager.prototype.logOutput = function (id, data) {
 	this.logs[id].push(data);
 }
-module.exports.dl = YoutubeDownloader;
+module.exports.dl = DlManager;
 
 
 var APIPlaylistData = function (playlistId, APIKey, callback) {
