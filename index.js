@@ -252,7 +252,7 @@ IdDictionary.prototype.addIds = function (ids) {
 IdDictionary.prototype.addDirectory = function (directory) {
 	console.log("Reading directory " + directory + "to find already downloaded files.");
 	var res = fs.readdirSync(directory);
-	console.log("res:", res);
+	//console.log("res:", res);
 	this.addIds(this.extractIdsFromFileNames(res));
 }
 YTScrape.IdDictionary = IdDictionary;
