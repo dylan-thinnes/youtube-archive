@@ -293,15 +293,20 @@ DlManager.prototype.runNextSnippet = function (index) {
 		var snippet = this.snippets.pop();
 		this.logs[snippet.id] = [];
 		this.setProcess(index, snippet);
-		this.callback(snippet.id);
 	}
 }
 DlManager.prototype.setProcess = function (index, snippet) {
 	var id = snippet.id;
-	console.log(`Downloading video ${id}.`);
+	var name = snippet.name;
+	console.log(`Start downloading video ${name}.`);
 	this.processes[index] = cp.exec(`youtube-dl https://www.youtube.com/watch?v=${id}`);
-	this.processes[index].on("close", this.runNextSnippet.bind(this, index));
-	this.processes[index].stdout.on("data", this.logOutput.bind(this, snippet.id));
+	this.processes[index].on("close", this.closeProcess.bind(this, name, id, index));
+	this.processes[index].stdout.on("data", this.logOutput.bind(this, id));
+}
+DlManager.prototype.closeProcess = function (name, id, index) {
+	this.callback(id);
+	console.log(`Finish downloading video ${name}.`);
+	this.runNextSnippet(index);
 }
 DlManager.prototype.logOutput = function (id, data) {
 	this.logs[id].push(data);
