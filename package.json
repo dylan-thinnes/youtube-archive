@@ -1,6 +1,6 @@
 {
   "name": "youtube-archive",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Saves/archives youtube videos from different sources while keeping track of previously downloaded videos.",
   "main": "index.js",
   "scripts": {
