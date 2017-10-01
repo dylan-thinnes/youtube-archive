@@ -33,6 +33,7 @@ var YTScrape = function () {
 			threads: commandLineArgs.indexOf("-t"),
 			dictionary: commandLineArgs.indexOf("-d"),
 			directories: commandLineArgs.indexOf("-s"),
+			//nodict: commandLineArgs.indexOf("-n"),
 			videos: commandLineArgs.indexOf("-v")
 		}
 		this.optionsChosen = {
@@ -120,15 +121,16 @@ var YTScrape = function () {
 }
 YTScrape.prototype.handleNewSnippets = function (snippets) {
 	for (var ii = 0; ii < snippets.length; ii++) {
-		console.log(this.dictionary.ids);
+		//console.log("Dictionary currently contains: ", this.dictionary.ids);
 		var undownloadedIds = this.dictionary.idsDontExist([snippets[ii].id]);
 		for (var jj = 0; jj < undownloadedIds.length; jj++) {
+			console.log("Add new video " + undownloadedIds[jj] + " to download queue.")
 			this.downloader.addId(undownloadedIds[jj]);
 		}
 	}
 }
 YTScrape.prototype.stageControl = function (event) {
-	console.log("stageControl called with event: ", event);
+	//console.log("stageControl called with event: ", event);
 	if (event === "dictionaryDone") {
 		this.state.dictionaryDone = true;
 	}
@@ -143,24 +145,29 @@ YTScrape.prototype.stageControl = function (event) {
 	}
 
 	if (this.state.dictionaryDone === true && this.state.initDone === true && this.state.playlistsStarted !== true) {
-		console.log("starting playlists...");
+		console.log("Download playlist data through API.");
 		this.state.playlistsStarted = true;
 		this.startPlaylists();
 	} else if (this.state.dictionaryDone === true && this.state.initDone === true && this.state.playlistsDone === this.playlistObjects.length && this.state.videoReadDone === true) {
-		console.log("starting download");
 		this.state.videoReadDone = false;
 		this.startDownload();
 	}
 }
 YTScrape.prototype.startPlaylists = function () {
 	if (this.playlistIds.length === 0 && this.videoIds.length === 0) {
-		console.log("Nothing to download!");
+		console.log("Nothing to download! Abort.");
 	} else {
-		console.log("Beginning download of data for " + this.playlistIds.length + " playlists and " + this.videoIds.length + " videos.");
+		//console.log("Beginning download of data for " + this.playlistIds.length + " playlists and " + this.videoIds.length + " videos.");
 		this.downloader = new YTScrape.DlManager(this.threads, [], undefined, this.dictionary.addId.bind(this.dictionary), console.log.bind(process, "Download complete!"));
+		//console.log("videoIds: ", this.videoIds);
 		this.handleNewSnippets(this.videoIds);
 		for (var ii = 0; ii < this.playlistIds.length; ii++) {
-			this.playlistObjects.push(new YTScrape.APIPlaylist(this.playlistIds[ii], this.API_KEY, this.handleNewSnippets.bind(this)));
+			console.log("Start downloading data for playlist " + this.playlistIds[ii] + ".");
+			this.playlistObjects.push(new YTScrape.ApiPlaylistData(this.playlistIds[ii], this.API_KEY, (function (id, res) {
+				console.log("Finish downloading data for playlist " + id + ".");
+				this.handleNewSnippets(res);
+				this.stageControl("playlistsDone");
+			}).bind(this, this.playlistIds[ii])));
 		}
 		//this.downloader.addSnippets(this.videoIds);
 		/*for (var ii = 0; ii < this.videoIds.length; ii++) {
@@ -170,7 +177,12 @@ YTScrape.prototype.startPlaylists = function () {
 	}
 }
 YTScrape.prototype.startDownload = function () {
-	this.downloader.startDownload();
+	if (this.downloader.snippets.length !== 0) {
+		console.log("Start download.");
+		this.downloader.startDownload();
+	} else {
+		console.log("Nothing to download! Abort download.");
+	}
 	//console.log("startDownload called");
 	//console.log("Printing snippets: ", this.downloader.snippets);
 }
@@ -183,9 +195,9 @@ var IdDictionary = function (filePath, initCallback) {
 	this.newWrite = false;
 	if (typeof this.filePath === "string") {
 		fs.readFile(this.filePath, "utf8", (function (err, res) {
-			if (err) console.log("Setting newWrite to true for new IdDictionary", this.newWrite = true);
+			if (err) console.log("Creating new file for IdDictionary.", this.newWrite = true);
 			else {
-				console.log(res, res.split("\n"));
+				//console.log(res, res.split("\n"));
 				this.ids = this.ids.concat(res.split("\n"));
 			}
 			fs.open(this.filePath, "a", this.setFile.bind(this));
@@ -260,13 +272,13 @@ DlManager.prototype.addSnippets = function (snippets) {
 	this.snippets = this.snippets.concat(snippets);
 }
 DlManager.prototype.addSnippet = function (snippet) {
-	console.log("addSnippet called with parameters:". arguments);
+	//console.log("addSnippet called with parameters:". arguments);
 	this.snippets.push(snippet);
 }
 DlManager.prototype.addId = function (id) {
-	console.log("addId called");
+	//console.log("addId called");
 	this.snippets.push({
-		name: "",
+		name: id,
 		id: id
 	});
 }
@@ -286,7 +298,7 @@ DlManager.prototype.runNextSnippet = function (index) {
 }
 DlManager.prototype.setProcess = function (index, snippet) {
 	var id = snippet.id;
-	console.log(`youtube-dl https://www.youtube.com/watch?v=${id}`);
+	console.log(`Downloading video ${id}.`);
 	this.processes[index] = cp.exec(`youtube-dl https://www.youtube.com/watch?v=${id}`);
 	this.processes[index].on("close", this.runNextSnippet.bind(this, index));
 	this.processes[index].stdout.on("data", this.logOutput.bind(this, snippet.id));
@@ -295,7 +307,7 @@ DlManager.prototype.logOutput = function (id, data) {
 	this.logs[id].push(data);
 }
 DlManager.prototype.startDownload = function () {
-	console.log(this.snippets);
+	//console.log(this.snippets);
 	for (var ii = 0; ii < this.threads; ii++) {
 		this.runNextSnippet(ii);
 	}
@@ -304,7 +316,7 @@ YTScrape.DlManager = DlManager;
 
 
 
-var APIPlaylistData = function (playlistId, APIKey, callback) {
+var ApiPlaylistData = function (playlistId, APIKey, callback) {
 	this.id = playlistId;
 	this.APIKey = APIKey/*AIzaSyATdBFjBBgA5r_GELdAzqbyGpi4x8mKkBo*/;
 	this.baseAPIEndpoint = `/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=${playlistId}&fields=items(snippet(resourceId%2FvideoId%2Ctitle))%2CnextPageToken&key=${APIKey}`;
@@ -315,12 +327,12 @@ var APIPlaylistData = function (playlistId, APIKey, callback) {
 	}
 	this.requestAPIData();
 }
-APIPlaylistData.prototype.parseAPIData = function (response) {
+ApiPlaylistData.prototype.parseAPIData = function (response) {
 	this.responseString = "";
 	response.on("data", this.addChunk.bind(this));
 	response.on("end", this.addVideos.bind(this));
 }
-APIPlaylistData.prototype.addVideos = function () {
+ApiPlaylistData.prototype.addVideos = function () {
 	var responseJSON = JSON.parse(this.responseString);
 	//Array.prototype.push.apply(this.videos, responseJSON.items);
 	for (var ii = 0; ii < responseJSON.items.length; ii++) {
@@ -329,24 +341,24 @@ APIPlaylistData.prototype.addVideos = function () {
 	if (responseJSON.nextPageToken !== undefined) this.requestAPIData(responseJSON.nextPageToken);
 	else this.return();
 }
-APIPlaylistData.prototype.addChunk = function (chunk) {
+ApiPlaylistData.prototype.addChunk = function (chunk) {
 	this.responseString += chunk;
 }
-APIPlaylistData.prototype.requestAPIData = function (pageToken) {
+ApiPlaylistData.prototype.requestAPIData = function (pageToken) {
 	https.get({
 		protocol: "https:",
 		host: "www.googleapis.com",
 		path: this.baseAPIEndpoint + ((pageToken !== undefined) ? "&pageToken=" + pageToken : "")
 	}).on("response", this.parseAPIData.bind(this));
 }
-APIPlaylistData.prototype.getVideoIds = function () {
+ApiPlaylistData.prototype.getVideoIds = function () {
 	var videoIds = [];
 	for (var ii = 0; ii < snippets.length; ii++) {
 		videoIds[ii] = this.videos[ii].id;
 	}
 	return videoIds;
 }
-YTScrape.APIPlaylistData = APIPlaylistData;
+YTScrape.ApiPlaylistData = ApiPlaylistData;
 
 
 var scraper = new YTScrape();
