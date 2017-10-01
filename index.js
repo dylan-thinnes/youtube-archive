@@ -124,6 +124,7 @@ Options:
 			this.argHandlers["help"]();	
 		} else {
 			for (var key in this.argIndexes) {
+				if (key === "help") continue;
 				if (this.argIndexes[key] === -1) this.argHandlers[key].call(this);
 				else this.argHandlers[key].call(this, commandLineArgs[this.argIndexes[key] + 1]);
 			}
