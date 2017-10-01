@@ -20,6 +20,7 @@ var YTScrape = function () {
 		this.videoIds = [];
 		this.playlistIds = [];
 		this.playlistObjects = [];
+		this.directories = [];
 		this.state = {
 			playlistsDone: 0,
 			dictionaryDone: false,
@@ -98,9 +99,10 @@ var YTScrape = function () {
 			directories: function (directories) {
 				if (directories === undefined) return;
 				var directoriesArray = JSON.parse(directories);
-				for (var ii = 0; ii < directoriesArray.length; ii++) {
+				/*for (var ii = 0; ii < directoriesArray.length; ii++) {
 					this.dictionary.addDirectory(directoriesArray[ii]);
-				}
+				}*/
+				this.directories = directoriesArray;
 				this.optionsChosen.directories = true;
 			},
 			videos: function (videos) {
@@ -145,6 +147,9 @@ YTScrape.prototype.stageControl = function (event) {
 	}
 
 	if (this.state.dictionaryDone === true && this.state.initDone === true && this.state.playlistsStarted !== true) {
+		for (var ii = 0; ii < this.directories.length; ii++) {
+			this.dictionary.addDirectory(this.directories[ii]);
+		}
 		console.log("Download playlist data through API.");
 		this.state.playlistsStarted = true;
 		this.startPlaylists();
@@ -245,9 +250,10 @@ IdDictionary.prototype.addIds = function (ids) {
 	}
 }
 IdDictionary.prototype.addDirectory = function (directory) {
-	fs.readdir(directory, (function (err, res) {
-		this.addIds(this.extractIdsFromFileNames(res));
-	}).bind(this));
+	console.log("Reading directory " + directory + "to find already downloaded files.");
+	var res = fs.readdirSync(directory);
+	console.log("res:", res);
+	this.addIds(this.extractIdsFromFileNames(res));
 }
 YTScrape.IdDictionary = IdDictionary;
 
