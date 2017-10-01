@@ -1,20 +1,8 @@
+#!/usr/bin/env node
 var path = require('path');
 var fs	 = require('fs');
 var https = require('https');
 var cp = require('child_process');
-//var ytdl = require('ytdl-core');
-/*var playlistId = (process.argv[2] && process.argv[2] !== "null") ? process.argv[2] : "UUmlRzNnfE0Qae_Ufn7NidIg";
-var directory = (process.argv[3] && process.argv[3] !== "null") ? process.argv[3] : "~";
-var title = (process.argv[4] && process.argv[4] !== "null") ? process.argv[4] : "playlist";
-var verbose = (process.argv[5] && process.argv[5] === "true") ? true : false;
-var googleAPIKey = (process.argv[6] && process.argv[6] !== "null") ? process.argv[6] : "AIzaSyATdBFjBBgA5r_GELdAzqbyGpi4x8mKkBo";
-var extraCheckDirs = (process.argv.length > 7) ? process.argv.slice(7) : [];
-//console.log(process.argv);
-const baseAPIEndpoint = "/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=" + playlistId + "&fields=items(snippet(resourceId%2FvideoId%2Ctitle))%2CnextPageToken&key="+googleAPIKey;
-var playlistAPIData = [];
-var playlistAPIDataLength = 0;
-var finalOutput = "";
-var file = title + ".sh";*/
 var YTScrape = function () {
 	this.init = function (commandLineArgs) {
 		this.videoIds = [];
@@ -30,10 +18,11 @@ var YTScrape = function () {
 			key: commandLineArgs.indexOf("-k"),
 			//customOptionFile: commandLineArgs.indexOf("-o"),
 			playlistId: commandLineArgs.indexOf("-p"),
-			logging: commandLineArgs.indexOf("-l"),
+			//logging: commandLineArgs.indexOf("-l"),
 			threads: commandLineArgs.indexOf("-t"),
 			dictionary: commandLineArgs.indexOf("-d"),
 			directories: commandLineArgs.indexOf("-s"),
+			help: commandLineArgs.indexOf("-h"),
 			//nodict: commandLineArgs.indexOf("-n"),
 			videos: commandLineArgs.indexOf("-v")
 		}
@@ -44,6 +33,23 @@ var YTScrape = function () {
 			videos: false
 		}
 		this.argHandlers = {
+			help: function () {
+				console.log(`
+						
+Usage: youtube-scrape [options]
+
+Options:
+-d <path>         Path to dictionary to use.
+                  Defaults to tempDict.txt
+-h                Display this help dialog.
+-k <key>          Define custom key for Google API.
+                  Defaults to AIzaSyATdBFjBBgA5r_GELdAzqbyGpi4x8mKkBo
+-p <id>           ID of playlist to download.
+-s <directories>  JSON-formatted array of paths to directories to search for id collisions.
+-t <n>            Number of videos to consecutively download.
+-v <videos>       JSON-formatted array of videos to add to the download queue.
+`);	
+			},
 			key: function (key) {
 				if (key === undefined) this.API_KEY = "AIzaSyATdBFjBBgA5r_GELdAzqbyGpi4x8mKkBo";
 				else this.API_KEY = key;
@@ -114,9 +120,13 @@ var YTScrape = function () {
 				this.optionsChosen.videos = true;
 			}
 		}
-		for (var key in this.argIndexes) {
-			if (this.argIndexes[key] === -1) this.argHandlers[key].call(this);
-			else this.argHandlers[key].call(this, commandLineArgs[this.argIndexes[key] + 1]);
+		if (this.argIndexes["help"] !== -1) {
+			this.argHandlers["help"]();	
+		} else {
+			for (var key in this.argIndexes) {
+				if (this.argIndexes[key] === -1) this.argHandlers[key].call(this);
+				else this.argHandlers[key].call(this, commandLineArgs[this.argIndexes[key] + 1]);
+			}
 		}
 		this.stageControl("initDone");
 	}
@@ -150,7 +160,6 @@ YTScrape.prototype.stageControl = function (event) {
 		for (var ii = 0; ii < this.directories.length; ii++) {
 			this.dictionary.addDirectory(this.directories[ii]);
 		}
-		console.log("Download playlist data through API.");
 		this.state.playlistsStarted = true;
 		this.startPlaylists();
 	} else if (this.state.dictionaryDone === true && this.state.initDone === true && this.state.playlistsDone === this.playlistObjects.length && this.state.videoReadDone === true) {
@@ -167,7 +176,7 @@ YTScrape.prototype.startPlaylists = function () {
 		//console.log("videoIds: ", this.videoIds);
 		this.handleNewSnippets(this.videoIds);
 		for (var ii = 0; ii < this.playlistIds.length; ii++) {
-			console.log("Start downloading data for playlist " + this.playlistIds[ii] + ".");
+			console.log("Start downloading Google API data for playlist " + this.playlistIds[ii] + ".");
 			this.playlistObjects.push(new YTScrape.ApiPlaylistData(this.playlistIds[ii], this.API_KEY, (function (id, res) {
 				console.log("Finish downloading data for playlist " + id + ".");
 				this.handleNewSnippets(res);
@@ -200,8 +209,10 @@ var IdDictionary = function (filePath, initCallback) {
 	this.newWrite = false;
 	if (typeof this.filePath === "string") {
 		fs.readFile(this.filePath, "utf8", (function (err, res) {
-			if (err) console.log("Creating new file for IdDictionary.", this.newWrite = true);
-			else {
+			if (err) {
+				console.log("Creating new file for IdDictionary.");
+				this.newWrite = true;
+			} else {
 				//console.log(res, res.split("\n"));
 				this.ids = this.ids.concat(res.split("\n"));
 			}

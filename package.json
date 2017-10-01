@@ -1,0 +1,30 @@
+{
+  "name": "youtube-archive",
+  "version": "1.0.0",
+  "description": "Saves/archives youtube videos from different sources while keeping track of previously downloaded videos.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dylan-thinnes/youtube-archive.git"
+  },
+  "keywords": [
+    "youtube",
+    "archive",
+    "yt",
+    "archiver",
+    "downloader",
+    "youtube-dl"
+  ],
+  "author": "Dylan Thinnes",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/dylan-thinnes/youtube-archive/issues"
+  },
+  "homepage": "https://github.com/dylan-thinnes/youtube-archive#readme",
+  "bin": {
+	"youtube-archive": "./index.js"
+  }
+}
