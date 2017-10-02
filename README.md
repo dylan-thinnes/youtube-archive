@@ -1,5 +1,6 @@
 # youtube-archive
-Archives and saves youtube videos from different sources while keeping track of previously downloaded videos.
+Archives and saves youtube videos from different sources while keeping track of previously downloaded videos.  
+*Disclaimer:* I am not responsible for the misuse of this tool and/or blatant diregard of relevant copyright law and terms and conditions. Please ensure that you are within your rights and obligations whenever forming mirrors or copies of content on youtube.
 
 # What it Does
 youtube-archive serves as a nodejs command-line utility that surrounds the youtube-dl python script with a group of useful helper functions, such as multi-directory search and multiple simultaneous downloads. In effect, it helps to "archive" youtube more effectively than youtube-dl does on its own.
