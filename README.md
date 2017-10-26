@@ -1,5 +1,6 @@
 # youtube-archive
 Archives and saves youtube videos from different sources while keeping track of previously downloaded videos.  
+*NOTE: You now need your own API KEY, either supplied through the command line or through key.txt*
 *Disclaimer:* I am not responsible for the misuse of this tool and/or blatant diregard of relevant copyright law and terms and conditions. Please ensure that you are within your rights and obligations whenever forming mirrors or copies of content on youtube.
 
 # What it Does
