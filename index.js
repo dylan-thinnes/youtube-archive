@@ -51,7 +51,7 @@ Options:
 `);	
 			},
 			key: function (key) {
-				if (key === undefined) this.API_KEY = "AIzaSyATdBFjBBgA5r_GELdAzqbyGpi4x8mKkBo";
+				if (key === undefined) this.API_KEY = fs.readFileSync(__dirname + "/key.txt", "utf8").toString().slice(0, -1);
 				else this.API_KEY = key;
 			},
 			/*customOptionFile: function (optionFile) {
