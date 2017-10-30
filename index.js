@@ -16,14 +16,11 @@ var YTScrape = function () {
 		}
 		this.argIndexes = {
 			key: commandLineArgs.indexOf("-k"),
-			//customOptionFile: commandLineArgs.indexOf("-o"),
 			playlistId: commandLineArgs.indexOf("-p"),
-			//logging: commandLineArgs.indexOf("-l"),
 			threads: commandLineArgs.indexOf("-t"),
 			dictionary: commandLineArgs.indexOf("-d"),
 			directories: commandLineArgs.indexOf("-s"),
 			help: commandLineArgs.indexOf("-h"),
-			//nodict: commandLineArgs.indexOf("-n"),
 			videos: commandLineArgs.indexOf("-v")
 		}
 		this.optionsChosen = {
@@ -35,7 +32,6 @@ var YTScrape = function () {
 		this.argHandlers = {
 			help: function () {
 				console.log(`
-						
 Usage: youtube-scrape [options]
 
 Options:
@@ -51,37 +47,19 @@ Options:
 `);	
 			},
 			key: function (key) {
-				if (key === undefined) this.API_KEY = fs.readFileSync(__dirname + "/key.txt", "utf8").toString().slice(0, -1);
-				else this.API_KEY = key;
+				if (key === undefined) {
+					this.API_KEY === undefined;
+					console.log("No API key supplied, you're on your own from here on out.");
+				} else {
+					try {
+						this.API_KEY = fs.readFileSync(key, "utf8").toString().slice(0, -1);
+						console.log("Using API key at path: " + key);
+					} catch (e) {
+						console.log("Error getting API key file. Exiting with code 1.");
+						process.exit(1);
+					}
+				}
 			},
-			/*customOptionFile: function (optionFile) {
-				var optionFile = fs.readFileSync(optionFile);
-				var options = JSON.parse(optionFile);
-				if (optionFile.dictionary === undefined) this.dictionary = new YTScrape.IdDictionary("/dict.txt", this.stageControl.bind(this, "dictionaryDone"));
-				if (optionFile.dictionary !== undefined) this.argHandlers.dictionary(optionFile.dictionary);
-					this.dictionary = new YTScrape.IdDictionary(optionFile.dictionary, this.stageControl.bind(this, "dictionaryDone")); 
-					this.optionsChosen.dictionary = true;
-				}
-				if (optionFile.searchDirs !== undefined) {
-					for (var ii = 0; ii < optionFile.searchDirs.length; ii++) {
-						this.dictionary.addDirectory(optionFile.searchDirs[ii]);
-					}
-				}
-				if (optionFile.playlists !== undefined) {
-					for (var ii = 0; ii < optionFile.playlists.length; ii++) {
-						this.playlistIds.push(optionFile.playlists[ii]);
-					}
-				}
-				if (optionsFile.threads !== undefined) {
-					this.threads = optionsFile.threads;
-				}
-				if (optionsFile.logging === true) {
-					this.logging = true;
-				}
-				if (optionsFile.key !== undefined) {
-					this.API_KEY = optionsFile.key;	
-				}
-			},*/
 			playlistId: function (id) {
 				if (id === undefined) return;
 				else {
@@ -134,7 +112,6 @@ Options:
 }
 YTScrape.prototype.handleNewSnippets = function (snippets) {
 	for (var ii = 0; ii < snippets.length; ii++) {
-		//console.log("Dictionary currently contains: ", this.dictionary.ids);
 		var undownloadedIds = this.dictionary.idsDontExist([snippets[ii].id]);
 		for (var jj = 0; jj < undownloadedIds.length; jj++) {
 			console.log("Add new video " + undownloadedIds[jj] + " to download queue.")
@@ -143,7 +120,6 @@ YTScrape.prototype.handleNewSnippets = function (snippets) {
 	}
 }
 YTScrape.prototype.stageControl = function (event) {
-	//console.log("stageControl called with event: ", event);
 	if (event === "dictionaryDone") {
 		this.state.dictionaryDone = true;
 	}
@@ -172,9 +148,7 @@ YTScrape.prototype.startPlaylists = function () {
 	if (this.playlistIds.length === 0 && this.videoIds.length === 0) {
 		console.log("Nothing to download! Abort.");
 	} else {
-		//console.log("Beginning download of data for " + this.playlistIds.length + " playlists and " + this.videoIds.length + " videos.");
 		this.downloader = new YTScrape.DlManager(this.threads, [], undefined, this.dictionary.addId.bind(this.dictionary), console.log.bind(process, "Download complete!"));
-		//console.log("videoIds: ", this.videoIds);
 		this.handleNewSnippets(this.videoIds);
 		for (var ii = 0; ii < this.playlistIds.length; ii++) {
 			console.log("Start downloading Google API data for playlist " + this.playlistIds[ii] + ".");
@@ -184,10 +158,6 @@ YTScrape.prototype.startPlaylists = function () {
 				this.stageControl("playlistsDone");
 			}).bind(this, this.playlistIds[ii])));
 		}
-		//this.downloader.addSnippets(this.videoIds);
-		/*for (var ii = 0; ii < this.videoIds.length; ii++) {
-			this.downloader.addSnippet(this.videoIds[ii]);
-		}*/
 		this.stageControl("videoReadDone");
 	}
 }
@@ -198,8 +168,6 @@ YTScrape.prototype.startDownload = function () {
 	} else {
 		console.log("Nothing to download! Abort download.");
 	}
-	//console.log("startDownload called");
-	//console.log("Printing snippets: ", this.downloader.snippets);
 }
 module.exports = YTScrape;
 
@@ -214,7 +182,6 @@ var IdDictionary = function (filePath, initCallback) {
 				console.log("Creating new file for IdDictionary.");
 				this.newWrite = true;
 			} else {
-				//console.log(res, res.split("\n"));
 				this.ids = this.ids.concat(res.split("\n"));
 			}
 			fs.open(this.filePath, "a", this.setFile.bind(this));
@@ -264,7 +231,6 @@ IdDictionary.prototype.addIds = function (ids) {
 IdDictionary.prototype.addDirectory = function (directory) {
 	console.log("Reading directory " + directory + "to find already downloaded files.");
 	var res = fs.readdirSync(directory);
-	//console.log("res:", res);
 	this.addIds(this.extractIdsFromFileNames(res));
 }
 YTScrape.IdDictionary = IdDictionary;
@@ -276,7 +242,6 @@ var DlManager = function (threads, snippets, options, callback, completeCallback
 	this.threadsFinished = 0;
 	this.snippets = [];
 	this.addSnippets(snippets);
-	//this.idPointer = 0;
 	this.processes = new Array(this.threads);
 	this.options = (options ? options : "");
 	this.logs = [];
@@ -290,11 +255,9 @@ DlManager.prototype.addSnippets = function (snippets) {
 	this.snippets = this.snippets.concat(snippets);
 }
 DlManager.prototype.addSnippet = function (snippet) {
-	//console.log("addSnippet called with parameters:". arguments);
 	this.snippets.push(snippet);
 }
 DlManager.prototype.addId = function (id) {
-	//console.log("addId called");
 	this.snippets.push({
 		name: id,
 		id: id
@@ -316,7 +279,7 @@ DlManager.prototype.runNextSnippet = function (index) {
 DlManager.prototype.setProcess = function (index, snippet) {
 	var id = snippet.id;
 	var name = snippet.name;
-	console.log(`Start downloading video ${name}.`);
+	console.log(`Downloading video ${name}...`);
 	this.processes[index] = cp.exec(`youtube-dl https://www.youtube.com/watch?v=${id}`);
 	this.processes[index].on("close", this.closeProcess.bind(this, name, id, index));
 	this.processes[index].stdout.on("data", this.logOutput.bind(this, id));
@@ -330,7 +293,6 @@ DlManager.prototype.logOutput = function (id, data) {
 	this.logs[id].push(data);
 }
 DlManager.prototype.startDownload = function () {
-	//console.log(this.snippets);
 	for (var ii = 0; ii < this.threads; ii++) {
 		this.runNextSnippet(ii);
 	}
@@ -341,7 +303,7 @@ YTScrape.DlManager = DlManager;
 
 var ApiPlaylistData = function (playlistId, APIKey, callback) {
 	this.id = playlistId;
-	this.APIKey = APIKey/*AIzaSyATdBFjBBgA5r_GELdAzqbyGpi4x8mKkBo*/;
+	this.APIKey = APIKey;
 	this.baseAPIEndpoint = `/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=${playlistId}&fields=items(snippet(resourceId%2FvideoId%2Ctitle))%2CnextPageToken&key=${APIKey}`;
 	this.videos = [];
 	this.return = function (returnValue) {
@@ -357,7 +319,6 @@ ApiPlaylistData.prototype.parseAPIData = function (response) {
 }
 ApiPlaylistData.prototype.addVideos = function () {
 	var responseJSON = JSON.parse(this.responseString);
-	//Array.prototype.push.apply(this.videos, responseJSON.items);
 	for (var ii = 0; ii < responseJSON.items.length; ii++) {
 		this.videos.push({snippet: responseJSON.items[ii].snippet.title, id: responseJSON.items[ii].snippet.resourceId.videoId});
 	}
@@ -385,45 +346,4 @@ YTScrape.ApiPlaylistData = ApiPlaylistData;
 
 
 var scraper = new YTScrape();
-scraper.init(process.argv.slice(2));
-/*var test = new IdDictionary("./test.txt", function () {
-	test.addDirectory("/media/dylan-thinnes/VERNE/videos/rlm/highlights");
-});*/
-
-
-/*var nextYoutubePage = function(nextPageToken){
-
-}*/
-/*var songlist = fs.openFileSync(__dirname + "videoList.txt");
-
-function playlist(url) {
-
-	'use strict';
-	var video = ytdl(url);
-
-	video.on('error', function error(err) {
-		console.log('error 2:', err);
-	});
-
-	var size = 0;
-	video.on('info', function(info) {
-		size = info.size;
-		var output = path.join(__dirname + 'videos/', size + '.mp4');
-		video.pipe(fs.createWriteStream(output));
-	});
-
-	var pos = 0;
-	video.on('data', function data(chunk) {
-		pos += chunk.length;
-		// `size` should not be 0 here.
-		if (size) {
-			var percent = (pos / size * 100).toFixed(2);
-			process.stdout.cursorTo(0);
-			process.stdout.clearLine(1);
-			process.stdout.write(percent + '%');
-		}
-	});
-	video.on('next', playlist);
-}
-
-playlist('https://www.youtube.com/playlist?list=PLJ5l1Fqq-I3trtQ5ab9kvukUcCvko_Kn3');*/
+scraper.init(process.argv);
