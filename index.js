@@ -280,13 +280,13 @@ DlManager.prototype.setProcess = function (index, snippet) {
 	var id = snippet.id;
 	var name = snippet.name;
 	console.log(`Downloading video ${name}...`);
-	this.processes[index] = cp.exec(`youtube-dl https://www.youtube.com/watch?v=${id}`);
-	this.processes[index].on("close", this.closeProcess.bind(this, name, id, index));
+	this.processes[index] = cp.exec(`youtube-dl https://www.youtube.com/watch?v=${id}`, this.closeProcess.bind(this, name, id, index));
 	this.processes[index].stdout.on("data", this.logOutput.bind(this, id));
 }
-DlManager.prototype.closeProcess = function (name, id, index) {
+DlManager.prototype.closeProcess = function (name, id, index, err) {
 	this.callback(id);
-	console.log(`Finish downloading video ${name}.`);
+	if (err) console.log(`Couldn't download video ${name}, you probably need to log in.`)
+	else console.log(`Finish downloading video ${name}.`);
 	this.runNextSnippet(index);
 }
 DlManager.prototype.logOutput = function (id, data) {
