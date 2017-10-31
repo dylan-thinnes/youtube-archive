@@ -39,7 +39,6 @@ Options:
                   Defaults to tempDict.txt
 -h                Display this help dialog.
 -k <key>          Define custom key for Google API.
-                  Defaults to AIzaSyATdBFjBBgA5r_GELdAzqbyGpi4x8mKkBo
 -p <id>           ID of playlist to download.
 -s <directories>  JSON-formatted array of paths to directories to search for id collisions.
 -t <n>            Number of videos to consecutively download.
